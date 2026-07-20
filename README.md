@@ -46,4 +46,6 @@ cargo test
 
 ## License
 
-TBD.
+[GPL-3.0-or-later](LICENSE). Lufus ports logic from GPL-3.0 tools (Rufus, WoeUSB,
+caligula), so the project as a whole is GPL-3.0. Ideas from MIT (Popsicle) and
+Apache-2.0 (balenaEtcher, drivelist) code are compatible with this license.
