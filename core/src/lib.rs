@@ -7,5 +7,7 @@
 //! See `docs/porting/` for the source-level specs this implementation follows.
 
 pub mod detect;
+pub mod device;
 
-pub use detect::{ImgReport, ImageKind};
+pub use detect::{ImageKind, ImgReport};
+pub use device::{check_write_allowed, Device, WriteRefusal};
