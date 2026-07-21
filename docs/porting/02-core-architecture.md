@@ -1,20 +1,20 @@
-# caligula + popsicle + etcher-sdk → Lufus core architecture
+# caligula + popsicle + etcher-sdk → Osedax core architecture
 
 Sources: `~/Lufus/{caligula,popsicle,etcher-sdk,drivelist,rs-drivelist}/`.
 
 ## 1. Workspace layout (popsicle model, refined)
 
 ```
-lufus/
+osedax/
 ├── Cargo.toml          # virtual workspace manifest, [workspace.dependencies]
-├── core/   (lufus-core) # ALL logic: detect, enumerate, write, verify, ipc, codec
-├── cli/    (lufus-cli)  # thin binary → `lufus`
-├── gui/    (lufus-gui)  # egui, deferred (stub now)
-└── helper/ (lufus-helper) # privileged worker (re-exec target)
+├── core/   (osedax-core) # ALL logic: detect, enumerate, write, verify, ipc, codec
+├── cli/    (osedax-cli)  # thin binary → `osedax`
+├── gui/    (osedax-gui)  # egui, deferred (stub now)
+└── helper/ (osedax-helper) # privileged worker (re-exec target)
 ```
 
 - Use a dedicated `core/` member (not popsicle's dual-role root) — scales better.
-- Frontends depend on core via `path`. `[[bin]] name = "lufus"` remaps binary name.
+- Frontends depend on core via `path`. `[[bin]] name = "osedax"` remaps binary name.
 - All enumeration, write/verify engine, IPC/privilege, codecs live in `core/`.
 - Prefer caligula's newer pins: anyhow 1.0.100, serde 1.0.228, libc 0.2.177, tokio 1.48.
 
@@ -105,7 +105,7 @@ pub fn check_write_allowed(d: &Device, image_path: &Path, image_size: u64, force
 
 ## 7. Decompression — fix caligula's extension-only bug
 
-caligula detects by extension ONLY (a gzip named `.img` silently written compressed). Lufus:
+caligula detects by extension ONLY (a gzip named `.img` silently written compressed). Osedax:
 sniff magic bytes via `BufReader::fill_buf()` (no consumption), use extension only as tiebreaker.
 Magics: gzip `1F 8B`, xz `FD 37 7A 58 5A 00`, bzip2 `42 5A 68`, zstd `28 B5 2F FD`, lz4 `04 22 4D 18`.
 Keep caligula's macro-generated uniform-`Read` DecompressRead design; only selection changes.

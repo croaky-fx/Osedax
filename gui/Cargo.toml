@@ -1,14 +1,14 @@
 [package]
-name = "lufus-gui"
+name = "osedax-gui"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
 [[bin]]
-name = "lufus-gui"
+name = "osedax-gui"
 path = "src/main.rs"
 
 [dependencies]
-lufus-core = { path = "../core" }
+osedax-core = { path = "../core" }
 # egui/eframe added when GUI work begins (deferred)

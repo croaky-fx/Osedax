@@ -1,4 +1,4 @@
-//! The `ImgReport` model — Lufus's single source of truth about an image.
+//! The `ImgReport` model — Osedax's single source of truth about an image.
 //!
 //! This is a direct port of Rufus's `RUFUS_IMG_REPORT` struct (`rufus.h:432-481`)
 //! and its `IS_*`/`HAS_*` decision macros (`rufus.h:370-395`). See
@@ -290,8 +290,134 @@ impl ImgReport {
     }
 
     /// Whether this image is supported at all: it must be raw-writable, or have
-    /// a BIOS or EFI boot method Lufus understands (final gate, rufus.c:1441).
+    /// a BIOS or EFI boot method Osedax understands (final gate, rufus.c:1441).
     pub fn is_supported(&self) -> bool {
         self.is_dd_bootable() || self.is_bios_bootable() || self.is_efi_bootable()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_report_detects_nothing() {
+        let r = ImgReport::default();
+        assert!(!r.has_windows());
+        assert!(!r.is_efi_bootable());
+        assert!(!r.is_bios_bootable());
+        assert!(!r.is_dd_bootable());
+        assert!(!r.is_supported());
+        assert!(!r.has_wininst());
+    }
+
+    #[test]
+    fn has_regular_efi_excludes_bootmgr_and_imgonly_bits() {
+        // bit 0 (bootmgr.efi) alone is NOT a regular per-arch loader.
+        let mut r = ImgReport::default();
+        r.has_efi = EFI_BOOTMGR;
+        assert!(!r.has_regular_efi());
+
+        // bit 15 (efi.img-only) alone is NOT a regular loader either.
+        r.has_efi = EFI_IMG_ONLY;
+        assert!(!r.has_regular_efi());
+
+        // A real per-arch loader bit (within the regular mask) counts.
+        r.has_efi = 0x0002;
+        assert!(r.has_regular_efi());
+    }
+
+    #[test]
+    fn win7_efi_requires_only_bootmgr_and_an_installer() {
+        let mut r = ImgReport::default();
+        r.has_efi = EFI_BOOTMGR;
+        r.wininst_index = 1;
+        assert!(r.has_win7_efi());
+
+        // Any additional EFI bit means it's not the Win7-only-bootmgr case.
+        r.has_efi = EFI_BOOTMGR | 0x0002;
+        assert!(!r.has_win7_efi());
+
+        // bootmgr.efi but no installer -> not Win7-EFI.
+        r.has_efi = EFI_BOOTMGR;
+        r.wininst_index = 0;
+        assert!(!r.has_win7_efi());
+    }
+
+    #[test]
+    fn fatless_grub_needs_efi_grub_without_a_fat_driver() {
+        let mut r = ImgReport::default();
+        // EFI GRUB present, no FAT driver in its build -> fatless.
+        r.has_grub2 = GRUB2_EFI;
+        r.has_grub2_fs = GRUB2_FS_NTFS;
+        assert!(r.has_fatless_grub());
+
+        // Same GRUB, but it carries a FAT driver -> not fatless.
+        r.has_grub2_fs = GRUB2_FS_FAT;
+        assert!(!r.has_fatless_grub());
+
+        // BIOS-only GRUB (no EFI bit) is never "fatless EFI GRUB".
+        r.has_grub2 = 0x01;
+        r.has_grub2_fs = 0;
+        assert!(!r.has_fatless_grub());
+    }
+
+    #[test]
+    fn fat32_compat_handles_the_splittable_only_case() {
+        let mut r = ImgReport::default();
+
+        // No oversized file, no fatless grub -> FAT32 is fine.
+        assert!(r.is_fat32_compat(false));
+
+        // A generic >=4GiB file rules out FAT32 regardless of dual-boot.
+        r.has_4gb_file = 0x02; // count 2, not the splittable-only sentinel
+        assert!(!r.is_fat32_compat(true));
+
+        // The exact 0x11 state (one oversized file == install.wim, entry 0) is
+        // FAT32-compatible ONLY when dual UEFI+BIOS is allowed (so it's split).
+        r.has_4gb_file = FOURGB_SPLITTABLE_ONLY;
+        assert!(!r.is_fat32_compat(false));
+        assert!(r.is_fat32_compat(true));
+
+        // needs_ntfs is an absolute veto even in the splittable case.
+        r.needs_ntfs = true;
+        assert!(!r.is_fat32_compat(true));
+    }
+
+    #[test]
+    fn wintogo_requires_bootmgr_efi_and_installer_together() {
+        let mut r = ImgReport::default();
+        r.has_bootmgr = true; // BIOS bootmgr
+        r.has_efi = 0x0002; // some EFI loader
+        r.wininst_index = 1; // an install.wim
+        assert!(r.has_wintogo());
+
+        // Drop the installer -> not Windows To Go.
+        r.wininst_index = 0;
+        assert!(!r.has_wintogo());
+    }
+
+    #[test]
+    fn persistence_excludes_windows_and_family_oses() {
+        let mut r = ImgReport::default();
+        r.sl_version = 6; // syslinux present -> a Linux live medium
+        assert!(r.has_persistence());
+
+        // If it's also a Windows medium, persistence doesn't apply.
+        r.has_bootmgr = true;
+        assert!(!r.has_persistence());
+    }
+
+    #[test]
+    fn dd_only_when_bootable_but_iso_mode_unusable() {
+        let mut r = ImgReport::default();
+        r.is_dd_bootable = DdBootable::Yes;
+        r.is_iso = true;
+        // Bootable ISO that also works in ISO mode -> not DD-only.
+        assert!(!r.is_dd_only());
+
+        // Same image but ISO mode disabled -> DD-only.
+        r.disable_iso = true;
+        assert!(r.is_dd_only());
     }
 }

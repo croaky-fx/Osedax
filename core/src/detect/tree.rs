@@ -1,6 +1,6 @@
 //! The image-detection decision tree.
 //!
-//! This is the heart of Lufus: given the head of an image, classify what it is
+//! This is the heart of Osedax: given the head of an image, classify what it is
 //! and how it must be written. The ordering follows
 //! `docs/porting/04-iso-detection-tree.md`: compression first, then the
 //! ISO/UDF optical family (with the critical hybrid branch), then raw disk

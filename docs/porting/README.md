@@ -1,13 +1,13 @@
-# Lufus Porting & Research Docs
+# Osedax Porting & Research Docs
 
-These documents capture the source-level analysis of the reference tools that Lufus
+These documents capture the source-level analysis of the reference tools that Osedax
 draws its logic from. Each spec is tied to real `file:line` references in the local
 clones under `~/Lufus/` (siblings of this repo). They are the implementation contract
-for `lufus-core`.
+for `osedax-core`.
 
 ## Reference repos analysed (in `~/Lufus/`)
 
-| Repo | Language | What Lufus takes from it |
+| Repo | Language | What Osedax takes from it |
 |------|----------|--------------------------|
 | `rufus` | C | The whole image-intelligence model: `img_report`, DD/ISO decision, `disable_iso` blocklist, WIM split, UEFI:NTFS, large-FAT32 formatter |
 | `caligula` | Rust | Raw write engine (O_DIRECT + aligned buffers + read-back verify), privileged-helper re-exec + stdio RPC, escalation detection |

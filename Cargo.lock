@@ -9,15 +9,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
-name = "lufus-cli"
+name = "osedax-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "lufus-core",
+ "osedax-core",
 ]
 
 [[package]]
-name = "lufus-core"
+name = "osedax-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -25,10 +25,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "lufus-gui"
+name = "osedax-gui"
 version = "0.1.0"
 dependencies = [
- "lufus-core",
+ "osedax-core",
 ]
 
 [[package]]

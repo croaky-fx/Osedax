@@ -6,9 +6,9 @@ members = ["core", "cli", "gui"]
 version = "0.1.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
-repository = "https://github.com/croaky-fx/Lufus"
+repository = "https://github.com/croaky-fx/Osedax"
 
 [workspace.dependencies]
-lufus-core = { path = "core" }
+osedax-core = { path = "core" }
 anyhow = "1"
 thiserror = "2"

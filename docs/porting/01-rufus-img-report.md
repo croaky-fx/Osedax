@@ -1,10 +1,10 @@
-# Rufus → Lufus Porting Spec: `img_report` + decision logic
+# Rufus → Osedax Porting Spec: `img_report` + decision logic
 
 Source: `~/Lufus/rufus/src/` (`rufus.h`, `iso.c`, `vhd.c`, `format.c`, `drive.c`, `format_fat32.c`, `rufus.c`).
 
 This is the **single source of truth** model. Rufus mutates one global `img_report`
 struct while scanning, then every downstream decision (filesystem, partition scheme,
-boot method) reads from it. Lufus reproduces this as `ImgReport` in `lufus-core`.
+boot method) reads from it. Osedax reproduces this as `ImgReport` in `osedax-core`.
 
 ## 1. The `ImgReport` struct (from rufus.h:432-481)
 

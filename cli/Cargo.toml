@@ -1,14 +1,14 @@
 [package]
-name = "lufus-cli"
+name = "osedax-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
 [[bin]]
-name = "lufus"
+name = "osedax"
 path = "src/main.rs"
 
 [dependencies]
-lufus-core = { path = "../core" }
+osedax-core = { path = "../core" }
 anyhow.workspace = true

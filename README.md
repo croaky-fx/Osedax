@@ -1,9 +1,13 @@
-# Lufus
+<p align="center">
+  <img src="assets/osedax.svg" alt="Osedax logo" width="160">
+</p>
+
+# Osedax
 
 A cross-platform USB flashing tool written in Rust, targeting **Windows, Linux, and BSD**
 with automatic platform detection.
 
-Lufus writes bootable images to USB drives. Rather than shelling out to an existing
+Osedax writes bootable images to USB drives. Rather than shelling out to an existing
 flasher, it reimplements the burning logic natively in Rust — taking the hard-won
 edge-case handling from mature tools (Rufus, WoeUSB, balenaEtcher) and porting the
 *logic* into a clean, testable core.
@@ -14,9 +18,9 @@ Early development. The project is a Cargo workspace:
 
 | Crate        | Purpose                                                    |
 | ------------ | --------------------------------------------------------- |
-| `lufus-core` | The platform-neutral engine: image detection, device enumeration, safety checks, and the write/verify pipeline. |
-| `lufus-cli`  | Command-line frontend.                                    |
-| `lufus-gui`  | Graphical frontend (egui). Deferred, but the architecture accommodates it from the start. |
+| `osedax-core` | The platform-neutral engine: image detection, device enumeration, safety checks, and the write/verify pipeline. |
+| `osedax-cli`  | Command-line frontend.                                    |
+| `osedax-gui`  | Graphical frontend (egui). Deferred, but the architecture accommodates it from the start. |
 
 ### What works today
 
@@ -46,6 +50,6 @@ cargo test
 
 ## License
 
-[GPL-3.0-or-later](LICENSE). Lufus ports logic from GPL-3.0 tools (Rufus, WoeUSB,
+[GPL-3.0-or-later](LICENSE). Osedax ports logic from GPL-3.0 tools (Rufus, WoeUSB,
 caligula), so the project as a whole is GPL-3.0. Ideas from MIT (Popsicle) and
 Apache-2.0 (balenaEtcher, drivelist) code are compatible with this license.

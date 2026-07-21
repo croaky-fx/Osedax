@@ -1,6 +1,6 @@
 # Image-Type Detection Tree & Edge Cases
 
-The core intelligence of Lufus. Read ~40 KB of the head plus targeted regions; decide
+The core intelligence of Osedax. Read ~40 KB of the head plus targeted regions; decide
 handling before touching any device. Probe windows: `0..512` (MBR/boot sector),
 byte `512` (GPT), `32768..34816` (ISO/UDF VRS + El Torito).
 
@@ -103,7 +103,7 @@ El Torito platform-0xEF entry. Strengthen when filename/label matches a BSD patt
 **Hard warning message (optical-only BSD ISO):** explain it's an optical ISO with no hybrid table,
 name the vendor's dedicated USB image, and require an explicit confirm to proceed.
 
-## Edge-case checklist (what separates Lufus from a naive dd)
+## Edge-case checklist (what separates Osedax from a naive dd)
 
 1. Non-hybrid ISO written raw → silent no-boot. Detect via 1a; warn.
 2. FAT32 4 GiB file limit vs install.wim. Split to `.swm` OR NTFS+UEFI:NTFS.
