@@ -148,7 +148,7 @@ pub fn el_torito(buf: &[u8]) -> Option<ElTorito> {
     if brvd[0] != 0x00 {
         return None;
     }
-    if &brvd[1..6] != &ISO9660_MAGIC[..] {
+    if brvd[1..6] != ISO9660_MAGIC[..] {
         return None;
     }
     // The boot system identifier field is 32 bytes; match the leading id text.

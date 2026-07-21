@@ -298,6 +298,9 @@ impl ImgReport {
 
 #[cfg(test)]
 mod tests {
+    // Tests mutate individual report fields across successive assertions, so
+    // build from Default and assign rather than struct-update syntax.
+    #![allow(clippy::field_reassign_with_default)]
     use super::*;
 
     #[test]
