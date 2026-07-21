@@ -419,4 +419,91 @@ mod tests {
             let _ = classify(&vec![0u8; len]);
         }
     }
+
+    // ---- BSD optical-only warning (the headline safety feature) ----
+
+    #[test]
+    fn guesses_bsd_flavor_from_name_or_label() {
+        assert_eq!(guess_bsd_flavor("FreeBSD-14.0-amd64-disc1.iso"), BsdFlavor::FreeBsd);
+        assert_eq!(guess_bsd_flavor("install79.iso"), BsdFlavor::Unknown); // no vendor word
+        assert_eq!(guess_bsd_flavor("OpenBSD/amd64 7.9 Install CD"), BsdFlavor::OpenBsd);
+        assert_eq!(guess_bsd_flavor("NetBSD-10.0-amd64.iso"), BsdFlavor::NetBsd);
+        assert_eq!(guess_bsd_flavor("dfly-x86_64-6.4_REL.iso"), BsdFlavor::DragonFly);
+        assert_eq!(guess_bsd_flavor("ubuntu-24.04-desktop.iso"), BsdFlavor::Unknown);
+    }
+
+    #[test]
+    fn optical_only_iso_produces_a_bsd_warning() {
+        // Plain ISO 9660, no partition table -> optical-only -> must warn.
+        let mut buf = blank_head();
+        make_iso(&mut buf);
+        let kind = classify(&buf);
+        let w = bsd_warning(&kind, "FreeBSD-14.0-amd64-disc1.iso")
+            .expect("optical-only ISO must warn");
+        assert_eq!(w.flavor, BsdFlavor::FreeBsd);
+        assert!(w.message.contains("memstick.img"));
+        assert!(w.message.to_lowercase().contains("non-bootable"));
+    }
+
+    #[test]
+    fn hybrid_iso_produces_no_bsd_warning() {
+        // A dd-writable hybrid ISO is fine to write raw -> no warning.
+        let mut buf = blank_head();
+        make_iso(&mut buf);
+        add_mbr_partition(&mut buf, 0x83);
+        let kind = classify(&buf);
+        assert!(bsd_warning(&kind, "arch-2026.iso").is_none());
+    }
+
+    #[test]
+    fn non_iso_never_warns() {
+        // A raw disk image is not an ISO; the BSD warning must not fire.
+        let mut buf = blank_head();
+        add_mbr_partition(&mut buf, 0x83);
+        assert!(bsd_warning(&classify(&buf), "anything").is_none());
+    }
+
+    #[test]
+    fn optical_only_without_bsd_name_still_warns_generically() {
+        let mut buf = blank_head();
+        make_iso(&mut buf);
+        let w = bsd_warning(&classify(&buf), "mystery.iso").expect("still warns");
+        assert_eq!(w.flavor, BsdFlavor::Unknown);
+        // Generic hint, no vendor-specific filename.
+        assert!(w.message.contains("dedicated USB"));
+    }
+
+    // ---- inspect() + Verdict ----
+
+    #[test]
+    fn inspect_bundles_kind_and_warning() {
+        let mut buf = blank_head();
+        make_iso(&mut buf);
+        let v = inspect(&buf, "OpenBSD 7.9 install");
+        assert!(matches!(v.kind, ImageKind::Iso { .. }));
+        assert!(!v.is_dd_writable()); // optical-only
+        assert_eq!(v.bsd_warning.as_ref().map(|w| w.flavor), Some(BsdFlavor::OpenBsd));
+    }
+
+    #[test]
+    fn verdict_dd_writable_matrix() {
+        // Hybrid ISO / disk image / bare fs are dd-writable; compressed, WIM,
+        // unknown, and optical-only ISO are not.
+        let dd_writable = |k: ImageKind| Verdict { kind: k, bsd_warning: None }.is_dd_writable();
+        assert!(dd_writable(ImageKind::DiskImage { gpt: true }));
+        assert!(dd_writable(ImageKind::BareFilesystem(FilesystemHint::Ext)));
+        assert!(dd_writable(ImageKind::Iso {
+            hybrid: IsoHybrid::BiosHybrid,
+            udf: false,
+            el_torito: true,
+        }));
+        assert!(!dd_writable(ImageKind::Iso {
+            hybrid: IsoHybrid::OpticalOnly,
+            udf: false,
+            el_torito: false,
+        }));
+        assert!(!dd_writable(ImageKind::Compressed(Compression::Xz)));
+        assert!(!dd_writable(ImageKind::Wim));
+        assert!(!dd_writable(ImageKind::Unknown));
+    }
 }
