@@ -30,9 +30,24 @@ Early development. The project is a Cargo workspace:
 - **Hybrid-ISO analysis.** Distinguishes a dd-writable hybrid ISO from an
   optical-only one, and warns before writing an optical-only BSD ISO that would
   not boot from USB.
+- **Device enumeration (Linux).** Lists whole disks from pure sysfs — no external
+  commands — detecting USB by bus type, reading real sector sizes, and gathering
+  mount points. Windows and BSD share the same interface and are next.
+- **Write-safety guard.** Before any write it refuses a read-only device, a device
+  that hosts the source image, one too small for the image, or the system disk
+  (the last overridable only with an explicit force flag).
 
-All detection logic is a pure function of bytes — no device access — and is covered
-by unit tests.
+Detection and safety are pure functions — no device writes anywhere yet — and are
+covered by unit tests. Enumeration is read-only.
+
+## Usage
+
+```sh
+osedax list        # list detected disks (read-only)
+```
+
+Writing images is not implemented yet.
+
 
 ## Design notes
 

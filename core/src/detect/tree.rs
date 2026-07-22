@@ -185,14 +185,16 @@ pub struct BsdWarning {
 
 /// Guess the BSD flavor from an image's filename and/or volume label.
 ///
-/// Matches the patterns documented in the spec: `disc1`/`dvd1`/`bootonly`,
-/// `installXX.iso`/`cdXX.iso`, `NetBSD-*.iso`, `dfly-*_REL.iso`, and labels like
-/// `OpenBSD/amd64 7.9 Install CD`.
+/// Matches vendor words (`freebsd`/`openbsd`/`netbsd`/`dragonfly`/`dfly`) and,
+/// for OpenBSD whose ISOs are often named without the word, the characteristic
+/// `install<NN>`/`cd<NN>` filenames (e.g. `install79.iso`, `cd79.iso`).
+/// Returns [`BsdFlavor::Unknown`] when nothing matches — the warning still
+/// fires for any optical-only ISO, this only picks which USB image to name.
 pub fn guess_bsd_flavor(name_and_label: &str) -> BsdFlavor {
     let s = name_and_label.to_ascii_lowercase();
     if s.contains("freebsd") {
         BsdFlavor::FreeBsd
-    } else if s.contains("openbsd") {
+    } else if s.contains("openbsd") || has_openbsd_iso_name(&s) {
         BsdFlavor::OpenBsd
     } else if s.contains("netbsd") {
         BsdFlavor::NetBsd
@@ -201,6 +203,25 @@ pub fn guess_bsd_flavor(name_and_label: &str) -> BsdFlavor {
     } else {
         BsdFlavor::Unknown
     }
+}
+
+/// True if `s` (already lowercased) contains an OpenBSD-style optical filename:
+/// the token `install` or `cd` immediately followed by at least two digits
+/// (the release number, e.g. `install79`, `cd79`). Requiring two digits keeps
+/// this from firing on generic names like `install.iso` or `cd/`.
+fn has_openbsd_iso_name(s: &str) -> bool {
+    for token in ["install", "cd"] {
+        let mut from = 0;
+        while let Some(pos) = s[from..].find(token) {
+            let after = from + pos + token.len();
+            let digits = s[after..].bytes().take_while(u8::is_ascii_digit).count();
+            if digits >= 2 {
+                return true;
+            }
+            from = after;
+        }
+    }
+    false
 }
 
 /// Produce a BSD warning if `kind` is an optical-only ISO. Returns `None` when
@@ -424,12 +445,30 @@ mod tests {
 
     #[test]
     fn guesses_bsd_flavor_from_name_or_label() {
-        assert_eq!(guess_bsd_flavor("FreeBSD-14.0-amd64-disc1.iso"), BsdFlavor::FreeBsd);
-        assert_eq!(guess_bsd_flavor("install79.iso"), BsdFlavor::Unknown); // no vendor word
-        assert_eq!(guess_bsd_flavor("OpenBSD/amd64 7.9 Install CD"), BsdFlavor::OpenBsd);
+        assert_eq!(
+            guess_bsd_flavor("FreeBSD-14.0-amd64-disc1.iso"),
+            BsdFlavor::FreeBsd
+        );
+        // OpenBSD ISOs are usually named without the vendor word; the
+        // install<NN>/cd<NN> filename pattern must still resolve to OpenBSD.
+        assert_eq!(guess_bsd_flavor("install79.iso"), BsdFlavor::OpenBsd);
+        assert_eq!(guess_bsd_flavor("cd79.iso"), BsdFlavor::OpenBsd);
+        assert_eq!(
+            guess_bsd_flavor("OpenBSD/amd64 7.9 Install CD"),
+            BsdFlavor::OpenBsd
+        );
+        // But a generic name without two release digits must NOT be tagged BSD.
+        assert_eq!(guess_bsd_flavor("install.iso"), BsdFlavor::Unknown);
+        assert_eq!(guess_bsd_flavor("ubuntu-installer.iso"), BsdFlavor::Unknown);
         assert_eq!(guess_bsd_flavor("NetBSD-10.0-amd64.iso"), BsdFlavor::NetBsd);
-        assert_eq!(guess_bsd_flavor("dfly-x86_64-6.4_REL.iso"), BsdFlavor::DragonFly);
-        assert_eq!(guess_bsd_flavor("ubuntu-24.04-desktop.iso"), BsdFlavor::Unknown);
+        assert_eq!(
+            guess_bsd_flavor("dfly-x86_64-6.4_REL.iso"),
+            BsdFlavor::DragonFly
+        );
+        assert_eq!(
+            guess_bsd_flavor("ubuntu-24.04-desktop.iso"),
+            BsdFlavor::Unknown
+        );
     }
 
     #[test]
@@ -438,8 +477,8 @@ mod tests {
         let mut buf = blank_head();
         make_iso(&mut buf);
         let kind = classify(&buf);
-        let w = bsd_warning(&kind, "FreeBSD-14.0-amd64-disc1.iso")
-            .expect("optical-only ISO must warn");
+        let w =
+            bsd_warning(&kind, "FreeBSD-14.0-amd64-disc1.iso").expect("optical-only ISO must warn");
         assert_eq!(w.flavor, BsdFlavor::FreeBsd);
         assert!(w.message.contains("memstick.img"));
         assert!(w.message.to_lowercase().contains("non-bootable"));
@@ -482,14 +521,23 @@ mod tests {
         let v = inspect(&buf, "OpenBSD 7.9 install");
         assert!(matches!(v.kind, ImageKind::Iso { .. }));
         assert!(!v.is_dd_writable()); // optical-only
-        assert_eq!(v.bsd_warning.as_ref().map(|w| w.flavor), Some(BsdFlavor::OpenBsd));
+        assert_eq!(
+            v.bsd_warning.as_ref().map(|w| w.flavor),
+            Some(BsdFlavor::OpenBsd)
+        );
     }
 
     #[test]
     fn verdict_dd_writable_matrix() {
         // Hybrid ISO / disk image / bare fs are dd-writable; compressed, WIM,
         // unknown, and optical-only ISO are not.
-        let dd_writable = |k: ImageKind| Verdict { kind: k, bsd_warning: None }.is_dd_writable();
+        let dd_writable = |k: ImageKind| {
+            Verdict {
+                kind: k,
+                bsd_warning: None,
+            }
+            .is_dd_writable()
+        };
         assert!(dd_writable(ImageKind::DiskImage { gpt: true }));
         assert!(dd_writable(ImageKind::BareFilesystem(FilesystemHint::Ext)));
         assert!(dd_writable(ImageKind::Iso {

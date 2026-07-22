@@ -283,6 +283,11 @@ impl ImgReport {
     /// read FAT), OR the only oversized file is a splittable install.wim and
     /// dual UEFI+BIOS is allowed (so the split will actually be applied) — and
     /// never when the image requires NTFS.
+    ///
+    /// Note the `has_fatless_grub` veto applies only to the first (`== 0`)
+    /// branch, matching Rufus exactly: the splittable-`install.wim` case
+    /// (`0x11`) is a Windows-installer medium, which never carries an EFI GRUB,
+    /// so the veto is intentionally absent there rather than forgotten.
     pub fn is_fat32_compat(&self, allow_dual_uefi_bios: bool) -> bool {
         let clean = self.has_4gb_file == 0 && !self.has_fatless_grub();
         let splittable = self.has_4gb_file == FOURGB_SPLITTABLE_ONLY && allow_dual_uefi_bios;

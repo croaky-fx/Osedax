@@ -305,7 +305,10 @@ mod tests {
 
     #[test]
     fn detects_each_compression_magic() {
-        assert_eq!(detect_compression(&[0x1F, 0x8B, 0x08]), Some(Compression::Gzip));
+        assert_eq!(
+            detect_compression(&[0x1F, 0x8B, 0x08]),
+            Some(Compression::Gzip)
+        );
         assert_eq!(
             detect_compression(&[0xFD, b'7', b'z', b'X', b'Z', 0x00]),
             Some(Compression::Xz)
@@ -382,7 +385,12 @@ mod tests {
         buf[o + 1..o + 6].copy_from_slice(ISO9660_MAGIC);
         buf[o + 7..o + 7 + EL_TORITO_ID.len()].copy_from_slice(EL_TORITO_ID);
         buf[o + 71..o + 75].copy_from_slice(&0x1234u32.to_le_bytes());
-        assert_eq!(el_torito(&buf), Some(ElTorito { catalog_lba: 0x1234 }));
+        assert_eq!(
+            el_torito(&buf),
+            Some(ElTorito {
+                catalog_lba: 0x1234
+            })
+        );
     }
 
     #[test]

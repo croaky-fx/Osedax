@@ -8,9 +8,11 @@
 //!
 //! See `docs/porting/02-core-architecture.md` §3 and §5-6.
 
+mod enumerate;
 mod safety;
 
-pub use safety::{check_write_allowed, is_source_drive, WriteRefusal};
+pub use enumerate::{EnumerateError, enumerate};
+pub use safety::{WriteRefusal, check_write_allowed, is_source_drive};
 
 use std::path::PathBuf;
 

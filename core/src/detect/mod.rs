@@ -15,7 +15,9 @@ pub mod tree;
 
 pub use img_report::ImgReport;
 pub use magic::Compression;
-pub use tree::{bsd_warning, classify, inspect, BsdFlavor, BsdWarning, ImageKind, IsoHybrid, Verdict};
+pub use tree::{
+    BsdFlavor, BsdWarning, ImageKind, IsoHybrid, Verdict, bsd_warning, classify, inspect,
+};
 
 /// Bytes of the image head the detection tree needs. Covers every probe window
 /// (the furthest is the El Torito BRVD at 0x8800 = 34816); 64 KiB gives margin

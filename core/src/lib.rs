@@ -10,4 +10,4 @@ pub mod detect;
 pub mod device;
 
 pub use detect::{ImageKind, ImgReport};
-pub use device::{check_write_allowed, Device, WriteRefusal};
+pub use device::{Device, WriteRefusal, check_write_allowed};
