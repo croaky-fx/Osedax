@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/osedax.svg" alt="Osedax logo" width="160">
+  <img src="assets/Osedax.svg" alt="Osedax logo" width="160">
 </p>
 
 # Osedax
